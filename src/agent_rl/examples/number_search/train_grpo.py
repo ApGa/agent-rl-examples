@@ -29,7 +29,7 @@ from agent_rl.rollout_workflows.orm_agent_workflow import ORMAgentWorkflow
 
 @dataclass
 class NumberSearchGRPOConfig(GRPOConfig):
-    workflow_config: dict = field(default_factory=dict)
+    workflow: dict = field(default_factory=dict)
 
 
 def main(args):

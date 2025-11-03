@@ -8,18 +8,27 @@ async_training: true
 
 cluster:
   n_nodes: 1
-  n_gpus_per_node: 8
+  n_gpus_per_node: 4
   fileroot: /tmp/areal/experiments
   name_resolve:
     type: nfs
     nfs_record_root: /tmp/areal/name_resolve
 
-allocation_mode: sglang.d4p1t1+d4p1t1
+allocation_mode: sglang.d2p1t1+d2p1t1
+
+workflow:
+  agent_id: number_search
+  environment_id: number_search
+  timeout: 300
+  max_steps: 15
+  n_samples: 4
+  agent_config: {}
+  environment_config: {}
 
 rollout:
   experiment_name: ${experiment_name}
   trial_name: ${trial_name}
-  max_concurrent_rollouts: 256
+  max_concurrent_rollouts: 24
   queue_size: null
   consumer_batch_size: ${train_dataset.batch_size}
   max_head_offpolicyness: 2
@@ -96,14 +105,15 @@ sglang:
   mem_fraction_static: 0.8
 
 # datasets
-train_dataset: # Unsed in our code
-  path: ""
+train_dataset:
+  path: "" # unused in our code
   type: rl
+  batch_size: 4
 
-valid_dataset: # Unsed in our code
-  path: ""
+valid_dataset:
+  path: "" # unused in our code
   type: rl
-
+  batch_size: 4
 # Utilities
 saver:
   experiment_name: ${experiment_name}
