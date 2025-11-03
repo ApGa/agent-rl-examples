@@ -25,6 +25,8 @@ from datasets import Dataset
 
 from agent_rl.examples.number_search.tasks import get_task, get_task_ids
 from agent_rl.rollout_workflows.orm_agent_workflow import ORMAgentWorkflow
+from agent_rl.examples.number_search.agent import NumberSearchAgent
+from agent_rl.examples.number_search.env import NumberSearchEnvironment
 
 
 @dataclass
@@ -112,13 +114,13 @@ def main(args):
     if tokenizer.eos_token_id not in config.gconfig.stop_token_ids:
         config.gconfig.stop_token_ids.append(tokenizer.eos_token_id)
 
-    config.workflow_config["gconfig"] = config.gconfig
+    config.workflow["gconfig"] = config.gconfig
 
     workflow = ORMAgentWorkflow(
-        config=config.workflow_config,
+        config=config.workflow,
     )
     eval_workflow = ORMAgentWorkflow(
-        config=config.workflow_config,
+        config=config.workflow,
     )
 
     # Run training.

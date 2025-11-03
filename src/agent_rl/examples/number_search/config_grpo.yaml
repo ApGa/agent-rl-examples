@@ -9,14 +9,15 @@ async_training: true
 cluster:
   n_nodes: 1
   n_gpus_per_node: 4
-  fileroot: /tmp/areal/experiments
+  fileroot: /mnt/nfs-shared-centralus/rl-party/areal/experiments
   name_resolve:
     type: nfs
-    nfs_record_root: /tmp/areal/name_resolve
+    nfs_record_root: /mnt/nfs-shared-centralus/rl-party/areal/name_resolve
 
 allocation_mode: sglang.d2p1t1+d2p1t1
 
 workflow:
+  model_name: ${actor.path}
   agent_id: number_search
   environment_id: number_search
   timeout: 300
