@@ -1,0 +1,82 @@
+from __future__ import annotations  # noqa
+from areal.api.workflow_api import RolloutWorkflow
+from areal.api.engine_api import InferenceEngine
+from areal.experimental.openai.types import InteractionWithTokenLogpReward
+from areal.utils.data import concat_padded_tensors
+from agent_rl.episode import run_episode
+from typing import Any
+import asyncio
+import torch
+from areal.experimental.openai.client import ArealOpenAI
+from areal.utils.hf_utils import load_hf_tokenizer
+from agent_rl.registry import get_agent, get_environment
+
+
+def construct_orm_trajectory_training_data(
+    llm_interactions: list[InteractionWithTokenLogpReward], reward: float
+) -> dict[str, Any]:
+    seq: list[int] = []
+    logprobs: list[float] = []
+    loss_mask: list[int] = []
+    versions: list[int] = []
+
+    for interaction in llm_interactions:
+        resp = interaction.model_response
+        input_len = len(resp.input_tokens) - len(seq)
+        seq += resp.input_tokens[-input_len:] + resp.output_tokens
+        logprobs += [0.0] * input_len + resp.output_logprobs
+        loss_mask += [0] * input_len + [1] * resp.output_len
+        versions += [-1] * input_len + resp.output_versions
+
+    res = dict(
+        input_ids=torch.tensor(seq),
+        logprobs=torch.tensor(logprobs),
+        loss_mask=torch.tensor(loss_mask),
+        versions=torch.tensor(versions),
+        rewards=torch.tensor(float(reward)),
+        token_rewards=torch.full((len(seq),), float(reward)),
+        attention_mask=torch.ones(len(seq), dtype=torch.bool),
+    )
+
+    res = {k: v.unsqueeze(0) for k, v in res.items()}
+    return concat_padded_tensors([res])
+
+
+class ORMAgentWorkflow(RolloutWorkflow):
+    def __init__(self, config: dict):
+        self.config = config
+
+    async def arun_episode(
+        self, engine: InferenceEngine, data: dict[str, Any]
+    ) -> dict[str, Any] | None | dict[str, InteractionWithTokenLogpReward]:
+        """Run a single episode of the workflow.
+
+        Note
+        ----
+        Returning `None` implies that this trajectory is rejected and will not be used for training.
+        """
+        try:
+            client = ArealOpenAI(
+                engine=engine, tokenizer=load_hf_tokenizer(self.config["model_name"])
+            )
+            agent = get_agent(
+                self.config["agent_id"], {**self.config["agent_config"], "llm_client": client}
+            )
+            environment = get_environment(
+                self.config["environment_id"], {**self.config["environment_config"], "data": data}
+            )
+            tasks = [
+                run_episode(agent, environment, self.config["timeout"], self.config["max_steps"])
+                for _ in range(self.config["gconfig"].n_samples)
+            ]
+            results = await asyncio.gather(*tasks)
+
+            processed_results = [
+                construct_orm_trajectory_training_data(obs.llm_interactions, obs.traj_reward)
+                for obs in results
+            ]
+            return concat_padded_tensors(processed_results)
+
+        except Exception as e:
+            print(f"Error in ORMAgentWorkflow: {e}")
+            return None
