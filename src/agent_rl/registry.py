@@ -3,8 +3,8 @@ from typing import Any, TypeVar, cast
 
 from agent_rl.types import AgentProtocol, EnvironmentProtocol
 
-AGENT_REGISTRY: dict[str, type[AgentProtocol]] = {}
-ENVIRONMENT_REGISTRY: dict[str, type[EnvironmentProtocol]] = {}
+AGENT_REGISTRY: dict[str, type[Any]] = {}
+ENVIRONMENT_REGISTRY: dict[str, type[Any]] = {}
 
 
 TAgentCls = TypeVar("TAgentCls", bound=type)
@@ -14,7 +14,7 @@ TEnvCls = TypeVar("TEnvCls", bound=type)
 def register_agent(name: str | None = None) -> Callable[[TAgentCls], TAgentCls]:
     def decorator(cls: TAgentCls) -> TAgentCls:
         registry_name = name if name is not None else cls.__name__
-        AGENT_REGISTRY[registry_name] = cast(type[AgentProtocol], cls)
+        AGENT_REGISTRY[registry_name] = cast(type[Any], cls)
         return cls
 
     return decorator
@@ -23,7 +23,7 @@ def register_agent(name: str | None = None) -> Callable[[TAgentCls], TAgentCls]:
 def register_environment(name: str | None = None) -> Callable[[TEnvCls], TEnvCls]:
     def decorator(cls: TEnvCls) -> TEnvCls:
         registry_name = name if name is not None else cls.__name__
-        ENVIRONMENT_REGISTRY[registry_name] = cast(type[EnvironmentProtocol], cls)
+        ENVIRONMENT_REGISTRY[registry_name] = cast(type[Any], cls)
         return cls
 
     return decorator

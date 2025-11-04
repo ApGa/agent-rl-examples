@@ -15,7 +15,7 @@ class NumberSearchAgent(AgentBase):
         response = await self.llm_client.chat.completions.create(
             messages=observation.messages,
             temperature=self.config["gconfig"].temperature,
-            max_new_tokens=self.config["gconfig"].max_new_tokens,
+            max_tokens=self.config["gconfig"].max_tokens,
         )
         action = NumberSearchAction(guess=response.choices[0].message.content)
         if isinstance(self.llm_client, ArealOpenAI):

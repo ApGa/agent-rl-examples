@@ -23,10 +23,11 @@ from areal.utils.saver import Saver
 from areal.utils.stats_logger import StatsLogger
 from datasets import Dataset
 
+# Ensure registration side-effects are applied
+import agent_rl.examples.number_search.agent  # noqa: F401
+import agent_rl.examples.number_search.env  # noqa: F401
 from agent_rl.examples.number_search.tasks import get_task, get_task_ids
 from agent_rl.rollout_workflows.orm_agent_workflow import ORMAgentWorkflow
-from agent_rl.examples.number_search.agent import NumberSearchAgent
-from agent_rl.examples.number_search.env import NumberSearchEnvironment
 
 
 @dataclass

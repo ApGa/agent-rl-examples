@@ -37,8 +37,7 @@ rollout:
 
 gconfig:
   n_samples: ${workflow.n_samples}
-  min_new_tokens: 0
-  max_new_tokens: 1024
+  max_tokens: 24000
   greedy: false
   temperature: 1.0
 

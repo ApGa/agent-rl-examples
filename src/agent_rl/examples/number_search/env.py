@@ -1,6 +1,6 @@
-from string import Template
-
+import re
 from dataclasses import dataclass, field
+from string import Template
 
 from agent_rl.registry import register_environment
 from agent_rl.types import Action, EnvironmentBase, Observation
@@ -18,16 +18,25 @@ class NumberSearchAction(Action):
 
 def guess_number(guess: int, target: int) -> str:
     if guess == target:
-        return f"You guessed the number {target} correctly!"
+        return "You guessed the number correctly!"
     elif guess < target:
         return "Too low! Try again."
     else:
         return "Too high! Try again."
 
 
+_GUESS_RE = re.compile(r"<guess>(.*?)</guess>", re.IGNORECASE | re.DOTALL)
+
+
 def parse_action(action: NumberSearchAction) -> int:
-    """<guess>42</guess> -> 42"""
-    return int(action.guess.split("<guess>")[1].split("</guess>")[0])
+    """Extract the most recent <guess>...</guess> value and parse as int."""
+    text = action.guess.replace("<|im_end|>", "")
+    matches = list(_GUESS_RE.finditer(text))
+    if not matches:
+        raise ValueError("Missing <guess>...</guess> in assistant output")
+    # Choose the match that starts latest in the text (most recent)
+    last_match = max(matches, key=lambda m: m.start())
+    return int(last_match.group(1).strip())
 
 
 SYSTEM_PROMPT = """Solve the problem step by step.
@@ -61,7 +70,7 @@ class NumberSearchEnvironment(EnvironmentBase):
         return self.state
 
     async def evaluate(self):
-        if "correctly!" in self.state.messages[-1]["content"]:
+        if self.state.messages[-1]["content"] == "You guessed the number correctly!":
             return 1.0
         else:
             return 0.0
@@ -72,11 +81,13 @@ class NumberSearchEnvironment(EnvironmentBase):
         try:
             guess = parse_action(action)
         except Exception as e:
+            print(f"Warning: Invalid guess format {e}: {action.guess}")
             self.state.error_message = "Invalid guess format"
             self.state.messages.append(dict(role="user", content=self.state.error_message))
             return self.state
 
         response = guess_number(guess, self.target)
+        self.state.messages.append(dict(role="user", content=response))
         reward = await self.evaluate()
         self.state.traj_reward = reward
 
@@ -84,5 +95,4 @@ class NumberSearchEnvironment(EnvironmentBase):
             self.state.finished = True
             self.state.finish_message = "You guessed the number correctly!"
 
-        self.state.messages.append(dict(role="user", content=response))
         return self.state

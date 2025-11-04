@@ -20,7 +20,11 @@ async def run_episode(
             obs = await asyncio.wait_for(environment.step(action), timeout)
             step_count += 1
         if verbose:
-            print(f"Finished a rollout with {len(obs.llm_interactions)} interactions and reward {obs.traj_reward}")
+            msg = (
+                f"Finished a rollout with {len(obs.llm_interactions)} interactions "
+                f"and reward {obs.traj_reward}"
+            )
+            print(msg)
         return obs
     except Exception as e:
         print(f"Error in episode loop at step {step_count}: {str(e)}")

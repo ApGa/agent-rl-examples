@@ -4,12 +4,14 @@ from areal.api.engine_api import InferenceEngine
 from areal.experimental.openai.types import InteractionWithTokenLogpReward
 from areal.utils.data import concat_padded_tensors
 from agent_rl.episode import run_episode
+from agent_rl.types import Observation
 from typing import Any
 import asyncio
 import torch
 from areal.experimental.openai.client import ArealOpenAI
 from areal.utils.hf_utils import load_hf_tokenizer
 from agent_rl.registry import get_agent, get_environment
+import traceback
 
 
 def construct_orm_trajectory_training_data(
@@ -57,21 +59,38 @@ class ORMAgentWorkflow(RolloutWorkflow):
         """
         try:
             tasks = [
-                run_episode(get_agent(
-                    self.config["agent_id"], {**self.config["agent_config"], "llm_client": ArealOpenAI(
-                        engine=engine, tokenizer=load_hf_tokenizer(self.config["model_name"])
-                    ), "gconfig": self.config["gconfig"]}
-                ), get_environment(self.config["environment_id"], {**self.config["environment_config"], "data": data}), self.config["timeout"], self.config["max_steps"], verbose=False)
+                run_episode(
+                    get_agent(
+                        self.config["agent_id"],
+                        {
+                            **self.config["agent_config"],
+                            "llm_client": ArealOpenAI(
+                                engine=engine,
+                                tokenizer=load_hf_tokenizer(self.config["model_name"]),
+                            ),
+                            "gconfig": self.config["gconfig"],
+                        },
+                    ),
+                    get_environment(
+                        self.config["environment_id"],
+                        {**self.config["environment_config"], "data": data},
+                    ),
+                    self.config["timeout"],
+                    self.config["max_steps"],
+                    verbose=True,
+                )
                 for _ in range(self.config["gconfig"].n_samples)
             ]
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
             processed_results = [
-                construct_orm_trajectory_training_data(obs.llm_interactions, obs.traj_reward)
-                for obs in results
+                construct_orm_trajectory_training_data(o.llm_interactions, o.traj_reward)
+                for o in results
+                if isinstance(o, Observation)
             ]
             return concat_padded_tensors(processed_results)
 
         except Exception as e:
             print(f"Error in ORMAgentWorkflow: {e}")
+            traceback.print_exc()
             return None
