@@ -12,12 +12,17 @@ async def run_episode(
     obs = Observation()
     try:
         step_count = 0
+        print("Resetting agent")
         await agent.reset()
+        print("Resetting environment")
         obs = await environment.reset()
-
+        print("Reset Observation:", obs)
         while not halt_episode(obs, step_count, max_steps):
+            print("Step:", step_count)
             action = await asyncio.wait_for(agent.act(obs), timeout)
+            print("Action:", action)
             obs = await asyncio.wait_for(environment.step(action), timeout)
+            print("Step Observation:", obs)
             step_count += 1
 
         return obs

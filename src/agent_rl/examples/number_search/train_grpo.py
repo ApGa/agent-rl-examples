@@ -163,6 +163,7 @@ def main(args):
                     workflow=workflow,
                     should_accept=lambda sample: True,
                 )
+                print("Batch:", batch)
             else:
                 batch = actor.rollout_batch(
                     next(data_generator),

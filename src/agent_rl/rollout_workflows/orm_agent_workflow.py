@@ -34,7 +34,7 @@ def construct_orm_trajectory_training_data(
         loss_mask=torch.tensor(loss_mask),
         versions=torch.tensor(versions),
         rewards=torch.tensor(float(reward)),
-        token_rewards=torch.full((len(seq),), float(reward)),
+        token_rewards=torch.full((len(seq),), fill_value=float(reward), dtype=torch.float32),
         attention_mask=torch.ones(len(seq), dtype=torch.bool),
     )
 

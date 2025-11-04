@@ -51,10 +51,11 @@ class NumberSearchEnvironment(EnvironmentBase):
         self.state = NumberSearchObservation(messages=[])
 
     async def reset(self) -> Observation:
+        print("setting state")
         self.state = NumberSearchObservation(
             messages=[
                 dict(role="system", content=SYSTEM_PROMPT),
-                dict(role="user", content=USER_PROMPT.format(min=self.min, max=self.max)),
+                dict(role="user", content=USER_PROMPT.substitute(dict(min=self.min, max=self.max))),
             ]
         )
         return self.state
