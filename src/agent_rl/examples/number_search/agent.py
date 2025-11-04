@@ -15,12 +15,10 @@ class NumberSearchAgent(AgentBase):
         response = await self.llm_client.chat.completions.create(
             messages=observation.messages,
             temperature=self.config["gconfig"].temperature,
-            max_tokens=self.config["gconfig"].max_new_tokens,
+            max_new_tokens=self.config["gconfig"].max_new_tokens,
         )
-        print("Response in Act:", response)
         action = NumberSearchAction(guess=response.choices[0].message.content)
         if isinstance(self.llm_client, ArealOpenAI):
-            interaction_data = self.llm_client.get_completions(response.id)
-            print("Interaction data:", interaction_data)
+            interaction_data = self.llm_client.get_interaction(response.id)
             action.llm_interactions.append(interaction_data)
         return action

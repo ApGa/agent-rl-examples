@@ -11,11 +11,6 @@
 #SBATCH --error=slurm-scripts/logs/number-search-grpo_%j.err
 
 
-
-source /etc/profile.d/modules.sh
-
-module load cuda-12.8
-
 source .env
 
 uv run python -m areal.launcher.local src/agent_rl/examples/number_search/train_grpo.py --config src/agent_rl/examples/number_search/config_grpo.yaml

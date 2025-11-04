@@ -56,20 +56,15 @@ class ORMAgentWorkflow(RolloutWorkflow):
         Returning `None` implies that this trajectory is rejected and will not be used for training.
         """
         try:
-            client = ArealOpenAI(
-                engine=engine, tokenizer=load_hf_tokenizer(self.config["model_name"])
-            )
-            agent = get_agent(
-                self.config["agent_id"], {**self.config["agent_config"], "llm_client": client}
-            )
-            environment = get_environment(
-                self.config["environment_id"], {**self.config["environment_config"], "data": data}
-            )
             tasks = [
-                run_episode(agent, environment, self.config["timeout"], self.config["max_steps"])
+                run_episode(get_agent(
+                    self.config["agent_id"], {**self.config["agent_config"], "llm_client": ArealOpenAI(
+                        engine=engine, tokenizer=load_hf_tokenizer(self.config["model_name"])
+                    ), "gconfig": self.config["gconfig"]}
+                ), get_environment(self.config["environment_id"], {**self.config["environment_config"], "data": data}), self.config["timeout"], self.config["max_steps"], verbose=False)
                 for _ in range(self.config["gconfig"].n_samples)
             ]
-            results = await asyncio.gather(*tasks)
+            results = await asyncio.gather(*tasks, return_exceptions=True)
 
             processed_results = [
                 construct_orm_trajectory_training_data(obs.llm_interactions, obs.traj_reward)

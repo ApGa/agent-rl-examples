@@ -32,6 +32,7 @@ def parse_action(action: NumberSearchAction) -> int:
 
 SYSTEM_PROMPT = """Solve the problem step by step.
 Write your thoughts in <think> </think> tags and make a guess using the <guess> </guess> tags.
+You can use feedback from previous attempts to guide your next guess.
 
 Example:
 <think>thought process here</think>
@@ -51,7 +52,6 @@ class NumberSearchEnvironment(EnvironmentBase):
         self.state = NumberSearchObservation(messages=[])
 
     async def reset(self) -> Observation:
-        print("setting state")
         self.state = NumberSearchObservation(
             messages=[
                 dict(role="system", content=SYSTEM_PROMPT),
@@ -67,10 +67,11 @@ class NumberSearchEnvironment(EnvironmentBase):
             return 0.0
 
     async def step(self, action: NumberSearchAction) -> NumberSearchObservation:
+        self.state.messages.append(dict(role="assistant", content=action.guess))
         self.state.llm_interactions.extend(action.llm_interactions)
         try:
             guess = parse_action(action)
-        except ValueError:
+        except Exception as e:
             self.state.error_message = "Invalid guess format"
             self.state.messages.append(dict(role="user", content=self.state.error_message))
             return self.state
@@ -84,6 +85,4 @@ class NumberSearchEnvironment(EnvironmentBase):
             self.state.finish_message = "You guessed the number correctly!"
 
         self.state.messages.append(dict(role="user", content=response))
-        return NumberSearchObservation(
-            messages=self.state.messages, traj_reward=self.state.traj_reward
-        )
+        return self.state

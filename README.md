@@ -14,6 +14,13 @@ uv sync --extra dev
 uv run pre-commit install
 ```
 
+## Run an experiment.
+E.g., To run the number_search example with GRPO on a single node (tested with 4 A100s with 80GB VRAM each):
+```
+export WANDB_API_KEY=...
+uv run python -m areal.launcher.local src/agent_rl/examples/number_search/train_grpo.py --config src/agent_rl/examples/number_search/config_grpo.yaml
+```
+
 ## Development
 
 - Run formatters and linters via `uv run`:

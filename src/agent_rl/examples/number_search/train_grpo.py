@@ -163,7 +163,6 @@ def main(args):
                     workflow=workflow,
                     should_accept=lambda sample: True,
                 )
-                print("Batch:", batch)
             else:
                 batch = actor.rollout_batch(
                     next(data_generator),
@@ -171,6 +170,7 @@ def main(args):
                     workflow=workflow,
                     should_accept=lambda sample: True,
                 )
+            print(f"Batch rewards: {batch['rewards']}")
 
         if config.actor.recompute_logprob or config.actor.use_decoupled_loss:
             with stats_tracker.record_timing("recompute_logp"):

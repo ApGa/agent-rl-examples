@@ -1,4 +1,5 @@
 import asyncio
+import traceback
 
 from agent_rl.types import AgentProtocol, EnvironmentProtocol, Observation
 
@@ -8,31 +9,28 @@ async def run_episode(
     environment: EnvironmentProtocol,
     timeout: int | None = None,
     max_steps: int | None = None,
+    verbose: bool = True,
 ) -> Observation:
-    obs = Observation()
     try:
         step_count = 0
-        print("Resetting agent")
         await agent.reset()
-        print("Resetting environment")
         obs = await environment.reset()
-        print("Reset Observation:", obs)
         while not halt_episode(obs, step_count, max_steps):
-            print("Step:", step_count)
             action = await asyncio.wait_for(agent.act(obs), timeout)
-            print("Action:", action)
             obs = await asyncio.wait_for(environment.step(action), timeout)
-            print("Step Observation:", obs)
             step_count += 1
-
+        if verbose:
+            print(f"Finished a rollout with {len(obs.llm_interactions)} interactions and reward {obs.traj_reward}")
         return obs
     except Exception as e:
+        print(f"Error in episode loop at step {step_count}: {str(e)}")
+        traceback.print_exc()
         obs.error_message = f"Error in episode loop at step {step_count}: {str(e)}"
+        raise e
 
     finally:
         await agent.close()
         await environment.close()
-    return obs
 
 
 def halt_episode(obs: Observation, step_count: int, max_steps: int | None = None) -> bool:

@@ -3,7 +3,7 @@ name = "agent-rl-examples"
 version = "0.1.0"
 description = "Examples of training LLM agents with RL."
 readme = "README.md"
-requires-python = "==3.12"
+requires-python = "==3.12.*"
 dependencies = ["areal"]
 
 [project.optional-dependencies]
