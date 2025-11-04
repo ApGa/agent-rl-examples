@@ -33,11 +33,11 @@ def get_agent(name: str, config: dict[str, Any] | None = None) -> AgentProtocol:
     agent_cls = AGENT_REGISTRY[name]
     if config is None:
         config = {}
-    return cast(AgentProtocol, agent_cls(**config))
+    return cast(AgentProtocol, agent_cls(config))
 
 
 def get_environment(name: str, config: dict[str, Any] | None = None) -> EnvironmentProtocol:
     environment_cls = ENVIRONMENT_REGISTRY[name]
     if config is None:
         config = {}
-    return cast(EnvironmentProtocol, environment_cls(**config))
+    return cast(EnvironmentProtocol, environment_cls(config))

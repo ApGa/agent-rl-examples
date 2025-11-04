@@ -1,6 +1,6 @@
 from string import Template
 
-from attr import dataclass, field
+from dataclasses import dataclass, field
 
 from agent_rl.registry import register_environment
 from agent_rl.types import Action, EnvironmentBase, Observation
@@ -13,7 +13,7 @@ class NumberSearchObservation(Observation):
 
 @dataclass
 class NumberSearchAction(Action):
-    guess: str
+    guess: str = ""
 
 
 def guess_number(guess: int, target: int) -> str:
