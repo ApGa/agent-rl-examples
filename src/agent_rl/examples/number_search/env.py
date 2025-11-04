@@ -31,6 +31,8 @@ _GUESS_RE = re.compile(r"<guess>(.*?)</guess>", re.IGNORECASE | re.DOTALL)
 def parse_action(action: NumberSearchAction) -> int:
     """Extract the most recent <guess>...</guess> value and parse as int."""
     text = action.guess.replace("<|im_end|>", "")
+    if "</think>" in text:
+        text = text.split("</think>")[-1]
     matches = list(_GUESS_RE.finditer(text))
     if not matches:
         raise ValueError("Missing <guess>...</guess> in assistant output")
